@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1716474881 source:/home/j47/Documents/C++/Chess/main.cpp
+	<SDL2/SDL.h>
+	<SDL2/SDL_image.h>
+	<iostream>
+	<vector>
+	<utility>
+	<algorithm>
+
