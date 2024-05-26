@@ -5,4 +5,4 @@ The First Glimps::
 ![image](https://github.com/ju4700/Chess-With-C-Plus-Plus-OOP/assets/137766031/57b6c61d-12b0-431f-a8de-1e439e285388)
 
 En Passant, Castling and other types of moves::
-![image](https://github.com/ju4700/Chess-With-C-Plus-Plus-OOP/assets/137766031/28b9d5fa-90c7-4b07-9354-1646ae3d4e5e)
+![Screenshot from 2024-05-26 18-21-32](https://github.com/ju4700/Chess-With-C-Plus-Plus-OOP/assets/137766031/cbf10b3f-169f-4358-8b5e-5b13f73c3850)
