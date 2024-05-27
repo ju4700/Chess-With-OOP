@@ -5,7 +5,6 @@
 #include <utility>
 #include <algorithm>
 
-// Abstract base class for all chess pieces
 class Piece {
 protected:
     SDL_Renderer* m_renderer;
@@ -52,14 +51,14 @@ public:
     virtual void setCanEnPassant(bool) {}
 };
 
-// Modify Pawn class to handle En Passant
 class Pawn : public Piece {
 private:
     bool m_canEnPassant;
+    bool m_doubleStepLastMove;
 
 public:
     Pawn(SDL_Renderer* renderer, const std::string& imagePath, int x, int y, int size, bool isWhite)
-        : Piece(renderer, imagePath, x, y, size, isWhite), m_canEnPassant(false) {}
+        : Piece(renderer, imagePath, x, y, size, isWhite), m_canEnPassant(false), m_doubleStepLastMove(false) {}
 
     std::vector<std::pair<int, int>> getValidMoves(const std::vector<std::vector<Piece*>>& board) override {
         std::vector<std::pair<int, int>> validMoves;
@@ -85,16 +84,16 @@ public:
             validMoves.emplace_back(m_x + 1, m_y + direction);
         }
 
-        // En Passant
+        // EnPassant
         if (m_canEnPassant) {
             if (m_x > 0 && board[m_y][m_x - 1] != nullptr &&
                 board[m_y][m_x - 1]->isWhite() != m_isWhite &&
-                dynamic_cast<Pawn*>(board[m_y][m_x - 1])) {
+                dynamic_cast<Pawn*>(board[m_y][m_x - 1])->hasDoubleStepLastMove()) {
                 validMoves.emplace_back(m_x - 1, m_y + direction);
             }
             if (m_x < 7 && board[m_y][m_x + 1] != nullptr &&
                 board[m_y][m_x + 1]->isWhite() != m_isWhite &&
-                dynamic_cast<Pawn*>(board[m_y][m_x + 1])) {
+                dynamic_cast<Pawn*>(board[m_y][m_x + 1])->hasDoubleStepLastMove()) {
                 validMoves.emplace_back(m_x + 1, m_y + direction);
             }
         }
@@ -104,6 +103,14 @@ public:
 
     bool canEnPassant() const override { return m_canEnPassant; }
     void setCanEnPassant(bool canEnPassant) override { m_canEnPassant = canEnPassant; }
+
+    bool hasDoubleStepLastMove() const {
+        return m_doubleStepLastMove;
+    }
+
+    void setDoubleStepLastMove(bool doubleStep) {
+        m_doubleStepLastMove = doubleStep;
+    }
 };
 
 class Rook : public Piece {
@@ -158,10 +165,8 @@ public:
                 break;
             }
         }
-
         return validMoves;
     }
-
     bool canCastle() const override { return m_canCastle; }
     void setCanCastle(bool canCastle) override { m_canCastle = canCastle; }
 };
@@ -185,7 +190,6 @@ public:
                 }
             }
         }
-
         return validMoves;
     }
 };
@@ -247,7 +251,6 @@ public:
                 }
             }
         }
-
         return validMoves;
     }
 };
@@ -301,7 +304,6 @@ public:
                 break;
             }
         }
-
         // Diagonal moves
         for (int i = 1; i < 8; ++i) {
             if (m_x + i < 8 && m_y + i < 8) {
@@ -351,7 +353,6 @@ public:
                 }
             }
         }
-
         return validMoves;
     }
 };
@@ -374,12 +375,24 @@ public:
             int nx = m_x + dx[i];
             int ny = m_y + dy[i];
             if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
-                if (board[ny][nx] == nullptr || board[ny][nx]->isWhite() != m_isWhite) {
+                bool canCapture = false;
+                if (board[ny][nx] == nullptr) {
+                    canCapture = true;
+                } else {
+                    if (board[ny][nx]->isWhite() != m_isWhite) {
+                        for (const auto& enemyMove : board[ny][nx]->getValidMoves(board)) {
+                            if (enemyMove.first == nx && enemyMove.second == ny) {
+                                canCapture = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (canCapture) {
                     validMoves.emplace_back(nx, ny);
                 }
             }
         }
-
         // Castling
         if (m_canCastle) {
             // King-side castling
@@ -393,10 +406,8 @@ public:
                 validMoves.emplace_back(m_x - 2, m_y);
             }
         }
-
         return validMoves;
     }
-
     bool canCastle() const override { return m_canCastle; }
     void setCanCastle(bool canCastle) override { m_canCastle = canCastle; }
 };
@@ -465,34 +476,28 @@ public:
             m_board[1][i] = new Pawn(m_renderer, "images/black_pawn.png", i, 1, m_cellSize, false);
             m_board[6][i] = new Pawn(m_renderer, "images/white_pawn.png", i, 6, m_cellSize, true);
         }
-
         // Load rooks
         m_board[0][0] = new Rook(m_renderer, "images/black_rook.png", 0, 0, m_cellSize, false);
         m_board[0][7] = new Rook(m_renderer, "images/black_rook.png", 7, 0, m_cellSize, false);
         m_board[7][0] = new Rook(m_renderer, "images/white_rook.png", 0, 7, m_cellSize, true);
         m_board[7][7] = new Rook(m_renderer, "images/white_rook.png", 7, 7, m_cellSize, true);
-
         // Load knights
         m_board[0][1] = new Knight(m_renderer, "images/black_knight.png", 1, 0, m_cellSize, false);
         m_board[0][6] = new Knight(m_renderer, "images/black_knight.png", 6, 0, m_cellSize, false);
         m_board[7][1] = new Knight(m_renderer, "images/white_knight.png", 1, 7, m_cellSize, true);
         m_board[7][6] = new Knight(m_renderer, "images/white_knight.png", 6, 7, m_cellSize, true);
-
         // Load bishops
         m_board[0][2] = new Bishop(m_renderer, "images/black_bishop.png", 2, 0, m_cellSize, false);
         m_board[0][5] = new Bishop(m_renderer, "images/black_bishop.png", 5, 0, m_cellSize, false);
         m_board[7][2] = new Bishop(m_renderer, "images/white_bishop.png", 2, 7, m_cellSize, true);
         m_board[7][5] = new Bishop(m_renderer, "images/white_bishop.png", 5, 7, m_cellSize, true);
-
         // Load queens
         m_board[0][3] = new Queen(m_renderer, "images/black_queen.png", 3, 0, m_cellSize, false);
         m_board[7][3] = new Queen(m_renderer, "images/white_queen.png", 3, 7, m_cellSize, true);
-
         // Load kings
         m_board[0][4] = new King(m_renderer, "images/black_king.png", 4, 0, m_cellSize, false);
         m_board[7][4] = new King(m_renderer, "images/white_king.png", 4, 7, m_cellSize, true);
     }
-
 
     void run() {
         while (m_isRunning) {
@@ -515,9 +520,79 @@ public:
         }
     }
 
+    bool isKingInCheck(bool isWhiteKing) {
+        int kingX = -1, kingY = -1;
+        // Find the position of the king
+        for (int i = 0; i < m_boardSize; ++i) {
+            for (int j = 0; j < m_boardSize; ++j) {
+                if (m_board[i][j] && dynamic_cast<King*>(m_board[i][j]) && m_board[i][j]->isWhite() == isWhiteKing) {
+                    kingX = j;
+                    kingY = i;
+                    break;
+                }
+            }
+        }
+        if (kingX == -1 || kingY == -1) {
+            // King not found, something went wrong
+            return false;
+        }
+        // Check if any opponent piece has a valid move that includes the king's position
+        for (int i = 0; i < m_boardSize; ++i) {
+            for (int j = 0; j < m_boardSize; ++j) {
+                if (m_board[i][j] && m_board[i][j]->isWhite() != isWhiteKing) {
+                    auto validMoves = m_board[i][j]->getValidMoves(m_board);
+                    for (const auto& move : validMoves) {
+                        if (move.first == kingX && move.second == kingY) {
+                            return true; // King is in check
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    bool isCheckmate(bool isWhiteKing) {
+        // Check if the king is in check
+        if (!isKingInCheck(isWhiteKing)) {
+            return false; // King is not in check, hence not in checkmate
+        }
+        // Iterate through all possible moves of the king
+        for (int i = -1; i <= 1; ++i) {
+            for (int j = -1; j <= 1; ++j) {
+                if (i == 0 && j == 0) continue; // Skip current position
+                int newX = m_selectedPiece->getX() + i;
+                int newY = m_selectedPiece->getY() + j;
+                if (newX >= 0 && newX < m_boardSize && newY >= 0 && newY < m_boardSize) {
+                    // Try moving the king to this position
+                    auto tempPiece = m_board[newY][newX];
+                    m_board[newY][newX] = m_selectedPiece;
+                    m_board[m_selectedPiece->getY()][m_selectedPiece->getX()] = nullptr;
+                    m_selectedPiece->setPosition(newX, newY);
+
+                    // Check if the king is still in check after the move
+                    bool isInCheckAfterMove = isKingInCheck(isWhiteKing);
+
+                    // Undo the move
+                    m_board[m_selectedPiece->getY()][m_selectedPiece->getX()] = m_board[newY][newX];
+                    m_board[newY][newX] = tempPiece;
+                    m_selectedPiece->setPosition(m_selectedPiece->getX() - i, m_selectedPiece->getY() - j);
+
+                    if (!isInCheckAfterMove) {
+                        return false; // King can escape from check
+                    }
+                }
+            }
+        }
+        return true; // King is in checkmate
+    }
+
     void handleClick(int x, int y) {
         if (m_selectedPiece) {
             if (std::find(m_validMoves.begin(), m_validMoves.end(), std::make_pair(x, y)) != m_validMoves.end()) {
+                // Store the original position of the piece
+                int originalX = m_selectedPiece->getX();
+                int originalY = m_selectedPiece->getY();
                 // Handle castling
                 if (auto king = dynamic_cast<King*>(m_selectedPiece)) {
                     if (x == m_selectedPiece->getX() + 2) {
@@ -532,7 +607,6 @@ public:
                         m_board[y][x + 1]->setPosition(x + 1, y);
                     }
                 }
-
                 // Handle En Passant
                 if (auto pawn = dynamic_cast<Pawn*>(m_selectedPiece)) {
                     if (pawn->canEnPassant()) {
@@ -543,12 +617,25 @@ public:
                     }
                     pawn->setCanEnPassant(abs(y - m_selectedPiece->getY()) == 2);
                 }
-
                 // Move the piece
                 m_board[y][x] = m_selectedPiece;
                 m_board[m_selectedPiece->getY()][m_selectedPiece->getX()] = nullptr;
                 m_selectedPiece->setPosition(x, y);
 
+                if (isKingInCheck(m_isWhiteTurn)) {
+                    m_board[originalY][originalX] = m_selectedPiece;
+                    m_board[y][x] = nullptr;
+                    m_selectedPiece->setPosition(originalX, originalY);
+                    m_selectedPiece = nullptr;
+                    m_validMoves.clear();
+                    return;
+                    // Check if the move resulted in checkmate
+                    if (isCheckmate(m_isWhiteTurn)) {
+                        // End the game
+                        m_isRunning = false;
+                        // Optionally, display a message indicating checkmate
+                    }
+                }
                 // Reset castling ability
                 if (auto rook = dynamic_cast<Rook*>(m_selectedPiece)) {
                     rook->setCanCastle(false);
@@ -556,7 +643,6 @@ public:
                 if (auto king = dynamic_cast<King*>(m_selectedPiece)) {
                     king->setCanCastle(false);
                 }
-
                 m_selectedPiece = nullptr;
                 m_validMoves.clear();
                 m_isWhiteTurn = !m_isWhiteTurn;
@@ -573,7 +659,6 @@ public:
     void render() {
         SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
         SDL_RenderClear(m_renderer);
-
         // Render the board
         for (int i = 0; i < m_boardSize; ++i) {
             for (int j = 0; j < m_boardSize; ++j) {
@@ -584,16 +669,23 @@ public:
                 }
                 SDL_Rect cell = { j * m_cellSize, i * m_cellSize, m_cellSize, m_cellSize };
                 SDL_RenderFillRect(m_renderer, &cell);
+
+                if (m_board[i][j] && dynamic_cast<King*>(m_board[i][j]) &&
+                    isKingInCheck(m_board[i][j]->isWhite())) {
+                    SDL_Rect highlightRect = { j * m_cellSize, i * m_cellSize, m_cellSize, m_cellSize };
+                    SDL_Texture* highlightTexture = IMG_LoadTexture(m_renderer, "images/highlightxcf.png");
+                    SDL_RenderCopy(m_renderer, highlightTexture, NULL, &highlightRect);
+                    SDL_DestroyTexture(highlightTexture);
+                }
             }
         }
-
-        // Highlight valid moves
-        SDL_SetRenderDrawColor(m_renderer, 207, 207, 207, 255);
+        // Load highlight texture
+        SDL_Texture* highlightTexture = IMG_LoadTexture(m_renderer, "images/highlightxcf.png");
+        // Render highlight over valid moves
         for (const auto& move : m_validMoves) {
-            SDL_Rect cell = { move.first * m_cellSize, move.second * m_cellSize, m_cellSize, m_cellSize };
-            SDL_RenderFillRect(m_renderer, &cell);
+            SDL_Rect highlightRect = { move.first * m_cellSize, move.second * m_cellSize, m_cellSize, m_cellSize };
+            SDL_RenderCopy(m_renderer, highlightTexture, NULL, &highlightRect);
         }
-
         // Render the pieces
         for (int i = 0; i < m_boardSize; ++i) {
             for (int j = 0; j < m_boardSize; ++j) {
@@ -602,10 +694,9 @@ public:
                 }
             }
         }
-
+        SDL_DestroyTexture(highlightTexture);
         SDL_RenderPresent(m_renderer);
     }
-
 };
 
 int main() {
