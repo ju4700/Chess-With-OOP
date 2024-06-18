@@ -29,4 +29,4 @@ The game goes with a medieval theme and the pieces were designed by smalllikeart
 
 ### The documentaions I used:
 * https://ameye.dev/notes/chess-engine
-* https://trepo.tuni.fi/bitstream/handle/10024/140588/PodsechinIgor.pdf?sequence=2&isAllowed=y
+* https://trepo.tuni.fi/bitstream/handle/10024/140588/PodsechinIgor.pdf
