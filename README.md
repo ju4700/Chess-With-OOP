@@ -27,6 +27,17 @@ The game goes with a medieval theme and the pieces were designed by smalllikeart
 
 ![Screenshot from 2024-05-14 19-49-21](https://github.com/ju4700/Chess-With-C-Plus-Plus-OOP/assets/137766031/7c237fe2-ba6a-47d7-9b83-cd509f54ade5)
 
+## Usage and Flow
+* Initialization (init()): Initializes SDL2, creates window and renderer, loads piece images, and sets up initial game state.
+* Game Loop (run()): Handles game events (mouse clicks for piece selection and move execution), updates game state, and renders the board continuously.
+* Event Handling (handleEvents()): Polls SDL events (like mouse clicks and window closure) and delegates actions accordingly (e.g., selecting a piece, executing a move).
+* Piece Movement and Validation:
+** Each piece calculates its valid moves based on its specific rules (getValidMoves()).
+** Board state (m_board) is updated after valid moves are verified.
+* Endgame Conditions:
+** Checks for check, checkmate, and stalemate conditions using isKingInCheck(), isCheckmate(), and isStalemate() methods.
+
+
 ### The documentaions I used:
 * https://ameye.dev/notes/chess-engine
 * https://trepo.tuni.fi/bitstream/handle/10024/140588/PodsechinIgor.pdf
