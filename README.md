@@ -5,7 +5,7 @@ This is a comprehensive implementation of a chess engine using SDL2 and object-o
 ![image](https://github.com/ju4700/Chess-With-C-Plus-Plus-OOP/assets/137766031/a7b90dbc-f8b2-4e28-8d80-6053cef6f7ac)
 
 ## Key Classes and Structure
-### Piece Class Hierarchy:
+* Piece Class Hierarchy:
 
 Piece class is the base class for all chess pieces (Pawn, Rook, Knight, Bishop, Queen, King).
 Each piece class (Pawn, Rook, etc.) inherits from Piece and implements its own getValidMoves() method to calculate valid moves based on chess rules specific to that piece.
