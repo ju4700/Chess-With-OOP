@@ -33,8 +33,8 @@ The game goes with a medieval theme and the pieces were designed by smalllikeart
 * Event Handling (handleEvents()): Polls SDL events (like mouse clicks and window closure) and delegates actions accordingly (e.g., selecting a piece, executing a move).
 * Piece Movement and Validation:
   * Each piece calculates its valid moves based on its specific rules (getValidMoves()).
-** Board state (m_board) is updated after valid moves are verified.
-  * Endgame Conditions:
+  * Board state (m_board) is updated after valid moves are verified.
+* Endgame Conditions:
   * Checks for check, checkmate, and stalemate conditions using isKingInCheck(), isCheckmate(), and isStalemate() methods.
 
 
